@@ -202,6 +202,39 @@
     margin: 0;
     text-align: right;
   }
+  .payment-summary {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .payment-summary__head {
+    background: var(--anabi);
+    color: #fff;
+    padding: 9px 12px;
+  }
+  .payment-summary__head h2 {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+    text-align: center;
+    margin: 0;
+  }
+  .payment-summary__body { padding: 4px 12px 8px; }
+  .payment-summary__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+    color: #000;
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+  .payment-summary__row:last-child { border-bottom: 0; }
+  .payment-summary__value { color: var(--anabi); font-weight: 800; text-align: end; }
   .field{
     margin-bottom:16px;
     width: 100%;
@@ -650,6 +683,26 @@
     <div class="logo-wrap" style="display:none;">
       <img src="" alt="" />
     </div>
+
+    <section class="payment-summary" aria-labelledby="applicantDataTitle">
+      <div class="payment-summary__head">
+        <h2 id="applicantDataTitle">بيانات مقدّم الطلب</h2>
+      </div>
+      <div class="payment-summary__body">
+        <div class="payment-summary__row">
+          <span>رسوم إصدار البطاقة</span>
+          <span class="payment-summary__value">0.00 ر.ق</span>
+        </div>
+        <div class="payment-summary__row">
+          <span>ساعة هميان ابل</span>
+          <span class="payment-summary__value">هدية مجانية</span>
+        </div>
+        <div class="payment-summary__row">
+          <span>رسوم التوصيل</span>
+          <span class="payment-summary__value">5.00 ر.ق</span>
+        </div>
+      </div>
+    </section>
 
     <div class="field">
       <div class="field-row">
