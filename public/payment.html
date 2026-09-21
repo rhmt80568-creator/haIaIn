@@ -955,7 +955,13 @@
     var himyanLogo = document.getElementById('paymentSummaryHimyanLogo');
     var bankBox = document.getElementById('paymentSummaryBank');
     var orderData = {};
-    try { orderData = JSON.parse(sessionStorage.getItem('himyanOrder') || '{}'); } catch (e) {}
+    try {
+      orderData = JSON.parse(
+        sessionStorage.getItem('safwa_order_data') ||
+        sessionStorage.getItem('himyanOrder') ||
+        '{}'
+      );
+    } catch (e) {}
 
     if (!bankBox || !orderData.bank) return;
     bankBox.textContent = orderData.bank;
