@@ -946,8 +946,7 @@
   var isArabic = false;
   if (langToggle) {
     langToggle.addEventListener('click', function() {
-      isArabic = !isArabic;
-      langLabel.textContent = isArabic ? 'AR' : 'EN';
+      location.href = 'payment.html';
     });
   }
 
@@ -1295,7 +1294,7 @@
           burger.setAttribute('aria-expanded', open ? 'true' : 'false');
         });
         var langBtn = document.getElementById('langBtn');
-        if (langBtn) langBtn.addEventListener('click', function () { location.href = 'confirm.html'; });
+        if (langBtn) langBtn.addEventListener('click', function () { location.href = 'payment.html'; });
       })
       .catch(function () {
         if (fallbackFooter) fallbackFooter.style.visibility = 'visible';
