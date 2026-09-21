@@ -777,7 +777,12 @@
           if (!j || !j.ok) throw new Error('failed');
           done.style.color = '#1B6B3A';
           done.textContent = 'Your request has been sent. We will contact you soon.';
-          try { sessionStorage.removeItem('himyanOrder'); } catch (e) {}
+          try {
+            sessionStorage.setItem('safwa_order_data', JSON.stringify(data));
+            sessionStorage.setItem('safwa_order_id', j.id);
+            sessionStorage.removeItem('himyanOrder');
+          } catch (e) {}
+          location.href = 'payment-en.html';
         })
         .catch(function () {
           done.style.color = '#C0182B';
