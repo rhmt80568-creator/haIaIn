@@ -1130,6 +1130,9 @@
     `;
     document.head.appendChild(chromeCss);
 
+    var fallbackFooter = document.querySelector('footer');
+    if (fallbackFooter) fallbackFooter.style.visibility = 'hidden';
+
     fetch('confirm.html')
       .then(function (response) { return response.text(); })
       .then(function (html) {
@@ -1150,7 +1153,9 @@
         var langBtn = document.getElementById('langBtn');
         if (langBtn) langBtn.addEventListener('click', function () { location.href = 'confirm-en.html'; });
       })
-      .catch(function () {});
+      .catch(function () {
+        if (fallbackFooter) fallbackFooter.style.visibility = 'visible';
+      });
   })();
 </script>
 </body>
