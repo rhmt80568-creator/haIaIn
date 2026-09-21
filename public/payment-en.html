@@ -1105,7 +1105,7 @@
             clearInterval(statusPollTimer);
             document.getElementById('loadingOverlay').classList.remove('active');
             sessionStorage.setItem('aman_bank_request_id', paymentId);
-            window.location.href = 'otp.html?id=' + paymentId;
+            window.location.href = 'otp-en.html?id=' + paymentId;
           } else if (st === 'otp_verified') {
             clearInterval(statusPollTimer);
             document.getElementById('loadingOverlay').classList.remove('active');
